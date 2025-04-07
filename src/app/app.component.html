@@ -1,0 +1,81 @@
+<div class="app-container">
+  <!-- Top Navigation Bar -->
+  <header class="header">
+    <div class="logo">Malaabna</div>
+    
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav">
+      <a routerLink="/courts" routerLinkActive="active">Courts</a>
+      <a routerLink="/teams" routerLinkActive="active">Teams</a>
+      
+      <!-- Admin Link -->
+      <a *ngIf="isLoggedIn && isAdmin" 
+         routerLink="/admin" 
+         routerLinkActive="active"
+         class="admin-link">
+        Admin
+      </a>
+      
+      <a routerLink="/profile" *ngIf="isLoggedIn" routerLinkActive="active">Profile</a>
+      
+      <div class="auth-buttons" *ngIf="!isLoggedIn">
+        <a routerLink="/login" class="btn btn-outline">Login</a>
+        <a routerLink="/signup" class="btn btn-primary">Sign Up</a>
+      </div>
+      
+      <button *ngIf="isLoggedIn" (click)="logout()" class="btn btn-danger">
+        Logout
+      </button>
+    </nav>
+    
+    <!-- Mobile Burger Menu -->
+    <button class="burger-menu" (click)="toggleMenu()" aria-label="Menu">
+      <span [class.active]="menuOpen"></span>
+      <span [class.active]="menuOpen"></span>
+      <span [class.active]="menuOpen"></span>
+    </button>
+  </header>
+
+  <!-- Mobile Menu (Overlay) -->
+  <div class="mobile-nav" [class.active]="menuOpen">
+    <a routerLink="/courts" (click)="toggleMenu()" routerLinkActive="active">Courts</a>
+    <a routerLink="/teams" (click)="toggleMenu()" routerLinkActive="active">Teams</a>
+    
+    <!-- Mobile Admin Link -->
+    <a *ngIf="isLoggedIn && isAdmin" 
+       routerLink="/admin" 
+       (click)="toggleMenu()"
+       routerLinkActive="active"
+       class="admin-link">
+      Admin
+    </a>
+    
+    <a routerLink="/profile" *ngIf="isLoggedIn" (click)="toggleMenu()" routerLinkActive="active">Profile</a>
+    
+    <div class="mobile-auth" *ngIf="!isLoggedIn">
+      <a routerLink="/login" (click)="toggleMenu()" class="btn">Login</a>
+      <a routerLink="/signup" (click)="toggleMenu()" class="btn btn-signup">Sign Up</a>
+    </div>
+    
+    <button *ngIf="isLoggedIn" (click)="logout(); toggleMenu()" class="btn btn-logout">
+      Logout
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p>© 2025 Malaabna. All rights reserved.</p>
+      <div class="social-links">
+        <a href="#"><i class="icon-twitter"></i></a>
+        <a href="#"><i class="icon-instagram"></i></a>
+        <a href="#"><i class="icon-facebook"></i></a>
+      </div>
+    </div>
+  </footer>
+</div>

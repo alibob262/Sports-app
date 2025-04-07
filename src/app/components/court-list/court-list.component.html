@@ -1,0 +1,54 @@
+<div class="filters">
+    <h3>Filter Courts</h3>
+  
+    <div class="sport-filters">
+      <h4>Sports:</h4>
+      <div *ngFor="let sport of sports" class="filter-option">
+        <input 
+          type="checkbox" 
+          [id]="sport" 
+          [checked]="selectedSports.includes(sport)"
+          (change)="toggleSport(sport, $event)">
+        <label [for]="sport">{{ sport | titlecase }}</label>
+      </div>
+    </div>
+  
+    <div class="type-filters">
+      <h4>Court Type:</h4>
+      <select [(ngModel)]="selectedType" (change)="applyFilters()">
+        <option value="">All Types</option>
+        <option value="indoor">Indoor</option>
+        <option value="outdoor">Outdoor</option>
+      </select>
+    </div>
+  
+    <button (click)="resetFilters()">Reset Filters</button>
+    
+    <!-- Add button to trigger dummy court addition -->
+    <button (click)="addDummyCourts()">Add Dummy Courts</button>
+  </div>
+  
+  <!-- Court List Section -->
+  <div class="court-list">
+    <div *ngFor="let court of courts$ | async" class="court-card">
+      <h3>{{ court.name }}</h3>
+      <p class="address">{{ court.location.address }}</p>
+      <p class="phone">Contact: {{ court.location.phone }}</p>
+  
+      <div class="sports">
+        <span *ngFor="let sport of court.sports" class="sport-badge">
+          {{ sport }}
+        </span>
+      </div>
+  
+      <p>Type: <strong>{{ court.type }}</strong></p>
+  
+      <a 
+        href="https://maps.google.com/?q={{court.location.geo.latitude}},{{court.location.geo.longitude}}" 
+        target="_blank"
+        class="map-link">
+        View on Map
+      </a>
+    </div>
+  </div>
+  

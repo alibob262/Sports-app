@@ -1,0 +1,46 @@
+/* Admin Link Styles */
+.admin-link {
+    color: #ff5722;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    
+    &:hover {
+      color: #e64a19;
+    }
+    
+    &.active {
+      border-bottom: 2px solid #ff5722;
+    }
+  
+    &::before {
+      content: "⚙️";
+      margin-right: 6px;
+      font-size: 1.1em;
+    }
+  }
+  
+  /* Mobile Admin Link */
+  .mobile-nav .admin-link {
+    color: #ff5722;
+    font-weight: bold;
+    padding: 12px 0;
+    
+    &::before {
+      content: "👑";
+      margin-right: 8px;
+    }
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .desktop-nav .admin-link {
+      display: none;
+    }
+  }
+  
+  @media (min-width: 769px) {
+    .mobile-nav .admin-link {
+      display: none;
+    }
+  }

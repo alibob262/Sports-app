@@ -1,0 +1,29 @@
+<div class="verify-email-container">
+    <div *ngIf="isLoading" class="loading">Checking verification status...</div>
+    
+    <div *ngIf="!isLoading">
+      <div *ngIf="isVerified" class="verified-message">
+        <h2>Email Verified!</h2>
+        <p>Your email {{ email }} has been successfully verified.</p>
+        <p>Redirecting to dashboard...</p>
+      </div>
+  
+      <div *ngIf="!isVerified" class="not-verified">
+        <h2>Verify Your Email</h2>
+        <p>We've sent a verification email to {{ email }}.</p>
+        <p>Please check your inbox and click the verification link.</p>
+        
+        <button (click)="resendVerification()" class="resend-button">
+          Resend Verification Email
+        </button>
+        
+        <p class="small-text">
+          Didn't receive the email? Check your spam folder or 
+          <a (click)="resendVerification()">click here</a> to resend.
+        </p>
+        <p class="small-text">
+            Once you sucessfully verify your account, its better to log out then log back in!
+        </p>
+      </div>
+    </div>
+  </div>
