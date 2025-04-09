@@ -6,7 +6,13 @@
     <!-- Desktop Navigation -->
     <nav class="desktop-nav">
       <a routerLink="/courts" routerLinkActive="active">Courts</a>
-      <a routerLink="/teams" routerLinkActive="active">Teams</a>
+      <a routerLink="/teams" 
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{exact: true}">View Teams</a>
+
+      <a routerLink="/teams/new" 
+      routerLinkActive="active">Create Team</a>
+
       
       <!-- Admin Link -->
       <a *ngIf="isLoggedIn && isAdmin" 
@@ -39,8 +45,15 @@
   <!-- Mobile Menu (Overlay) -->
   <div class="mobile-nav" [class.active]="menuOpen">
     <a routerLink="/courts" (click)="toggleMenu()" routerLinkActive="active">Courts</a>
-    <a routerLink="/teams" (click)="toggleMenu()" routerLinkActive="active">Teams</a>
-    
+    <a routerLink="/teams" 
+   (click)="toggleMenu()"
+   routerLinkActive="active"
+   [routerLinkActiveOptions]="{exact: true}">View Teams</a>
+
+<a routerLink="/teams/new" 
+   (click)="toggleMenu()"
+   routerLinkActive="active">Create Team</a>
+
     <!-- Mobile Admin Link -->
     <a *ngIf="isLoggedIn && isAdmin" 
        routerLink="/admin" 

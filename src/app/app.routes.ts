@@ -1,15 +1,17 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './components/auth/login/login.component';
 import { CourtListComponent } from './components/court-list/court-list.component';
-import { authGuard, unauthGuard, verifiedGuard } from './guards/auth.guard'; // Add verifiedGuard
+import { authGuard, unauthGuard, verifiedGuard } from './guards/auth.guard';
 import { SignupComponent } from './components/auth/signup/signup.component';
 import { TeamFormComponent } from './components/team-form/team-form.component';
 import { PasswordResetComponent } from './components/auth/password-reset/password-reset.component';
 import { VerifyEmailComponent } from './components/auth/verify-email/verify-email.component';
-import { DashboardComponent } from './components/dashboard/dashboard.component'; // Suggested addition
+import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { AdminDashboardComponent } from './components/admin-dashboard/admin-dashboard.component';
 import { adminGuard } from './guards/admin.guard';
 import { ProfileComponent } from './components/profile/profile.component';
+import { TeamsListComponent } from './components/teams-list/teams-list.component';
+import { TeamDetailsComponent } from './components/team-details/team-details.component';
 
 export const routes: Routes = [
   { 
@@ -20,7 +22,7 @@ export const routes: Routes = [
   { 
     path: 'dashboard', 
     component: DashboardComponent, 
-    canActivate: [authGuard, verifiedGuard], // Combined guards
+    canActivate: [authGuard, verifiedGuard],
     title: 'Dashboard' 
   },
   { 
@@ -36,12 +38,6 @@ export const routes: Routes = [
     title: 'Sign Up' 
   },
   { 
-    path: 'teams', 
-    component: TeamFormComponent,
-    canActivate: [authGuard, verifiedGuard],
-    title: 'Teams' 
-  },
-  { 
     path: 'password-reset', 
     component: PasswordResetComponent,
     title: 'Reset Password' 
@@ -52,7 +48,6 @@ export const routes: Routes = [
     canActivate: [authGuard], 
     title: 'Verify Email' 
   },
-
   { 
     path: 'admin', 
     component: AdminDashboardComponent,
@@ -65,14 +60,35 @@ export const routes: Routes = [
     canActivate: [authGuard, verifiedGuard],
     title: 'Find Courts' 
   },
-  // { 
-  //   path: 'profile', 
-  //   loadChildren: () => import('./components/profile/profile.routes')
-  //     .then(m => m.PROFILE_ROUTES) 
-  // },
-  { path: 'profile', component: ProfileComponent },
+  { 
+    path: 'profile', 
+    component: ProfileComponent,
+    canActivate: [authGuard, verifiedGuard],
+    title: 'My Profile'
+  },
+  { 
+    path: 'teams',
+    canActivate: [authGuard, verifiedGuard],
+    children: [
+      { 
+        path: '', 
+        component: TeamsListComponent, 
+        title: 'Teams List' 
+      },
+      { 
+        path: 'new', 
+        component: TeamFormComponent, 
+        title: 'Create Team' 
+      },
+      { 
+        path: ':id', 
+        component: TeamDetailsComponent,
+        title: 'Team Details'
+      }
+    ]
+  },
   { 
     path: '**', 
-    redirectTo: 'dashboard' // Handle 404
+    redirectTo: 'dashboard' 
   }
 ];

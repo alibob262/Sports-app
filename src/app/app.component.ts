@@ -14,7 +14,7 @@ import { AuthService } from './services/auth.service';
 })
 export class AppComponent implements OnDestroy {
   private auth: Auth = inject(Auth);
-  private router = inject(Router);
+  public router = inject(Router);
   private authService = inject(AuthService);
   private userSubscription: Subscription;
   
@@ -35,6 +35,10 @@ export class AppComponent implements OnDestroy {
 
   toggleMenu() {
     this.menuOpen = !this.menuOpen;
+  }
+
+  isTeamRouteActive(): boolean {
+  return this.router.url.includes('/teams');
   }
 
   async logout() {
