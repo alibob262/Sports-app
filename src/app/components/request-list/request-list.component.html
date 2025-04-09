@@ -1,0 +1,30 @@
+<mat-list>
+  <ng-container *ngIf="requests$ | async as requests; else loading">
+    <mat-list-item *ngIf="requests.length === 0">
+      <span class="no-requests">No pending requests</span>
+    </mat-list-item>
+
+    <mat-list-item *ngFor="let request of requests" class="request-item">
+      <div class="request-content">
+        <span matListItemTitle class="request-title">
+          <span class="request-name">{{ request.userDisplayName }}</span> 
+          wants to join as 
+          <span class="request-position">{{ request.position || 'any position' }}</span>
+        </span>
+        <span matListItemLine *ngIf="request.message" class="request-message">
+          {{ request.message }}
+        </span>
+      </div>
+      <div matListItemMeta class="request-actions">
+        <button mat-button color="primary" (click)="processRequest(request.id!, 'accept')">Accept</button>
+        <button mat-button color="warn" (click)="processRequest(request.id!, 'reject')">Reject</button>
+      </div>
+    </mat-list-item>
+  </ng-container>
+</mat-list>
+
+<ng-template #loading>
+  <div class="loading-spinner">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</ng-template>

@@ -1,0 +1,23 @@
+<h2 mat-dialog-title>Request to Join Team</h2>
+    <mat-dialog-content>
+      <mat-form-field appearance="fill">
+        <mat-label>Select Position</mat-label>
+        <mat-select [(ngModel)]="selectedPosition" required>
+          <mat-option *ngFor="let position of data.availablePositions" 
+                      [value]="position">
+            {{ position }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="onNoClick()">Cancel</button>
+      <button mat-raised-button color="primary" 
+              [mat-dialog-close]="selectedPosition"
+              [disabled]="!selectedPosition"
+              cdkFocusInitial>
+        Request
+      </button>
+    </mat-dialog-actions>
+
+

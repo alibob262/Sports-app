@@ -1,0 +1,98 @@
+
+    mat-list {
+        padding: 0;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+      
+        .request-item {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-start; // Changed from 'center' for better text flow
+          padding: 1.5rem 1rem;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+          height: auto !important;
+      
+          &:last-child {
+            border-bottom: none;
+          }
+      
+          .request-content {
+            flex: 1;
+            min-width: 0;
+            width: 100%; // Ensures full width for text flow
+          }
+      
+          .request-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #3f51b5;
+            display: block; // Changed from flex to block for natural wrapping
+          }
+      
+          // REMOVED all constraints on name/position
+          .request-name, .request-position {
+            display: inline; // Allows natural line breaks
+            white-space: normal; // Changed from nowrap
+          }
+      
+          .request-message {
+            font-size: 0.9rem;
+            color: rgba(0, 0, 0, 0.6);
+            margin-bottom: 1rem;
+            word-break: break-word;
+          }
+      
+          .request-actions {
+            display: flex;
+            gap: 1rem;
+            width: 100%; // Full width on mobile
+            margin-top: 0.5rem;
+      
+            button {
+              flex: 1; // Equal width buttons
+            }
+          }
+        }
+      }
+      
+      /* Mobile-specific adjustments */
+      @media (max-width: 768px) {
+        mat-list {
+          width: calc(100% - 2rem);
+          margin: 0 1rem;
+      
+          .request-item {
+            padding: 1rem 0;
+            gap: 0.5rem;
+      
+            .request-title {
+              font-size: 1rem; // Slightly smaller on mobile
+            }
+      
+            .request-actions {
+              margin-top: 0.75rem;
+              justify-content: space-between; // Better button spacing
+      
+              button {
+                min-width: 120px; // Prevent too-small buttons
+              }
+            }
+          }
+        }
+      }
+
+  .no-requests {
+    display: block;
+    padding: 2rem;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.6);
+    font-style: italic;
+  }
+  
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 3rem;
+  }

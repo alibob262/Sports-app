@@ -1,0 +1,90 @@
+<div class="teams-container">
+    <div class="teams-header">
+      <h2>Available Teams</h2>
+      <button 
+        mat-raised-button 
+        color="primary"
+        routerLink="/teams/new"
+        class="create-team-button"
+      >
+        <mat-icon>add</mat-icon>
+        Create New Team
+      </button>
+      <br>
+      <br>
+    </div>
+  
+    <!-- Filter Section -->
+    <div class="filters-section">
+      <mat-form-field appearance="outline">
+        <mat-label>Sport</mat-label>
+        <mat-select [(ngModel)]="filters.sport" (ngModelChange)="applyFilters()">
+          <mat-option value="">All Sports</mat-option>
+          <mat-option *ngFor="let sport of sports" [value]="sport">
+            {{ sport | titlecase }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Skill Level</mat-label>
+        <mat-select [(ngModel)]="filters.skillLevel" (ngModelChange)="applyFilters()">
+          <mat-option value="">All Levels</mat-option>
+          <mat-option *ngFor="let level of skillLevels" [value]="level">
+            {{ level | titlecase }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>From Date</mat-label>
+        <input matInput [matDatepicker]="startPicker" [(ngModel)]="filters.dateRange.start" (dateChange)="applyFilters()">
+        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>To Date</mat-label>
+        <input matInput [matDatepicker]="endPicker" [(ngModel)]="filters.dateRange.end" (dateChange)="applyFilters()">
+        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
+  
+      <button mat-raised-button color="warn" (click)="clearFilters()">Clear Filters</button>
+    </div>
+  
+    <!-- Teams List -->
+    <div class="teams-grid">
+      <ng-container *ngIf="teams$ | async as teams; else loading">
+        <ng-container *ngIf="teams.length > 0; else noTeams">
+          <mat-card *ngFor="let team of teams" class="team-card" [routerLink]="['/teams', team.id]">
+            <mat-card-header>
+              <mat-card-title>{{ team.sport | titlecase }} Team</mat-card-title>
+              <mat-card-subtitle>
+                {{ team.skillLevel | titlecase }} • {{ team.competitiveness | titlecase }}
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <p><strong>Location:</strong> {{ team.location.name }}</p>
+              <p><strong>When:</strong> {{ team.datetime | date:'medium' }}</p>
+              <p><strong>Players Needed:</strong> {{ team.neededPlayers - team.currentPlayers }} more</p>
+              <p><strong>Positions:</strong> {{ team.positionsNeeded.join(', ') }}</p>
+            </mat-card-content>
+          </mat-card>
+        </ng-container>
+  
+        <ng-template #noTeams>
+          <div class="no-teams">
+            <p>No teams found matching your criteria.</p>
+            <button mat-raised-button color="primary" (click)="clearFilters()">Clear Filters</button>
+          </div>
+        </ng-template>
+      </ng-container>
+  
+      <ng-template #loading>
+        <div class="loading-spinner">
+          <mat-spinner diameter="50"></mat-spinner>
+        </div>
+      </ng-template>
+    </div>
+  </div>
