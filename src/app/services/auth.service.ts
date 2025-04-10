@@ -29,26 +29,6 @@ export class AuthService {
     return roles.admin;
   }
 
-  // async signup(email: string, password: string, username: string): Promise<UserCredential> {
-  //   try {
-  //     const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
-  //     await sendEmailVerification(userCredential.user);
-      
-  //     await setDoc(doc(this.firestore, 'users', userCredential.user.uid), {
-  //       username,
-  //       email,
-  //       emailVerified: false,
-  //       createdAt: new Date(),
-  //       lastLogin: null,
-  //       roles: { user: true }
-  //     });
-      
-  //     return userCredential;
-  //   } catch (error) {
-  //     throw this.handleAuthError(error);
-  //   }
-  // }
-
   async signup(email: string, password: string, username: string): Promise<UserCredential> {
     try {
       const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
