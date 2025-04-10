@@ -203,3 +203,122 @@
   }
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+
+
+
+// Add this to your global styles.scss (or styles.css)
+
+/* Global Dialog Styles */
+.mat-dialog-container {
+  padding: 24px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 11px 15px -7px rgba(0,0,0,0.2), 
+              0 24px 38px 3px rgba(0,0,0,0.14), 
+              0 9px 46px 8px rgba(0,0,0,0.12) !important;
+}
+
+.mat-dialog-title {
+  color: var(--primary);
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.mat-dialog-content {
+  padding: 16px 0 !important;
+  margin: 0 !important;
+  
+  input {
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+    }
+    
+    &::placeholder {
+      color: var(--gray);
+      opacity: 0.7;
+    }
+  }
+}
+
+.mat-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0 0 0 !important;
+  margin: 0 !important;
+  min-height: auto !important;
+  
+  button {
+    margin-left: 8px !important;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    
+    &.mat-button {
+      color: var(--primary);
+      background-color: transparent;
+      border: 1px solid rgba(67, 97, 238, 0.5);
+      
+      &:hover {
+        background-color: rgba(67, 97, 238, 0.04);
+      }
+    }
+    
+    &.mat-raised-button {
+      color: white;
+      background-color: var(--primary);
+      border: none;
+      
+      &:hover {
+        background-color: var(--secondary);
+      }
+      
+      &:disabled {
+        background-color: rgba(0, 0, 0, 0.12);
+        color: rgba(0, 0, 0, 0.38);
+      }
+    }
+  }
+}
+
+/* Responsive Dialog Adjustments */
+@media (max-width: 600px) {
+  .mat-dialog-container {
+    width: 90vw !important;
+    max-width: 90vw !important;
+    padding: 16px !important;
+  }
+  
+  .mat-dialog-actions {
+    flex-wrap: wrap;
+    
+    button {
+      flex: 1;
+      margin: 4px 0 !important;
+    }
+  }
+}
