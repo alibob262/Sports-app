@@ -47,6 +47,11 @@ export class CourtListComponent implements OnInit {
             this.userLat = position.coords.latitude;
             this.userLng = position.coords.longitude;
             this.locationError = false;
+
+            console.log('Latitude:', this.userLat);
+            console.log('Longitude:', this.userLng);
+            console.log('Full position object:', position);
+
             resolve();
           },
           (error) => {
