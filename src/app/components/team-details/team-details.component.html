@@ -1,11 +1,77 @@
-<mat-card *ngIf="team$ | async as team">
-    <!-- Team details display -->
-    <button mat-raised-button color="primary" (click)="requestToJoin(team)">
-      Request to Join
-    </button>
+<div class="team-details-container">
+  <button mat-button (click)="goBack()" class="back-button">
+    <mat-icon>arrow_back</mat-icon> Back to Teams
+  </button>
+
+  <mat-card *ngIf="team$ | async as team" class="team-card">
+    <mat-card-header>
+      <mat-card-title>{{ team.sport | titlecase }} Team</mat-card-title>
+      <mat-card-subtitle>
+        <span class="skill-level">{{ team.skillLevel | titlecase }}</span> • 
+        <span class="competitiveness">{{ team.competitiveness | titlecase }}</span>
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="team-info-section">
+
+        <div class="info-row">
+          <mat-icon>location_on</mat-icon>
+          <div>
+            <h4>Court Details</h4>
+            <p>{{ team.location.name }}</p>
+            <p>{{ team.location.address }}</p>
+            <p class="court-details" *ngIf="getOptional(team.location, 'details')">
+              {{ getOptional(team.location, 'details') }}
+            </p>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <mat-icon>schedule</mat-icon>
+          <div>
+            <h4>Session Time</h4>
+            <p>{{ convertToDate(team.datetime) | date:'fullDate' }} at {{ convertToDate(team.datetime) | date:'shortTime' }}</p>
+            <p *ngIf="getOptional(team, 'duration')">
+              Duration: {{ getOptional(team, 'duration') }} minutes
+            </p>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <mat-icon>group</mat-icon>
+          <div>
+            <h4>Team Status</h4>
+            <p>{{ team.currentPlayers }}/{{ team.neededPlayers }} players confirmed</p>
+            <p *ngIf="team.positionsNeeded?.length">
+              <strong>Positions Open:</strong> {{ team.positionsNeeded.join(', ') }}
+            </p>
+          </div>
+        </div>
+
+        <div class="info-row" *ngIf="getOptional(team, 'rules')">
+          <mat-icon>rule</mat-icon>
+          <div>
+            <h4>Special Rules</h4>
+            <p>{{ getOptional(team, 'rules') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-section">
+        <button mat-raised-button 
+                color="primary" 
+                class="join-button"
+                (click)="requestToJoin(team)">
+          <mat-icon>group_add</mat-icon>
+          Request to Join
+        </button>
+      </div>
+    </mat-card-content>
   </mat-card>
 
-  <div *ngIf="isTeamOwner$ | async">
+  <div *ngIf="isTeamOwner$ | async" class="requests-section">
     <h3>Pending Requests</h3>
     <app-request-list [teamId]="teamId"></app-request-list>
   </div>
+</div>

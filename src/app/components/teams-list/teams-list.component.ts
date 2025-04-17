@@ -11,11 +11,12 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest, of } from 'rxjs';
 import { MatSpinner } from '@angular/material/progress-spinner';
 import { Team } from '../../models/team.model';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, switchMap, catchError } from 'rxjs/operators';
 import { Timestamp } from 'firebase/firestore';
+import { Firestore, doc, docData, getDoc } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-teams-list',
@@ -39,8 +40,9 @@ import { Timestamp } from 'firebase/firestore';
 })
 export class TeamsListComponent {
   private teamService = inject(TeamService);
+  private firestore = inject(Firestore);
 
-  teams$: Observable<Team[]>;
+  teams$: Observable<(Team & { creatorName: string })[]>;
   sports = ['football', 'basketball', 'tennis', 'volleyball'];
   skillLevels = ['beginner', 'intermediate', 'advanced'];
   
@@ -50,23 +52,71 @@ export class TeamsListComponent {
     dateRange: { start: null as Date | null, end: null as Date | null }
   };
 
-  // Add this to your TeamsListComponent constructor
-constructor() {
-  console.log('Initializing TeamsListComponent');
-  this.teams$ = this.teamService.getTeams().pipe(
-    map(teams => {
-      console.log('Teams received:', teams);
-      return teams.map(team => this.transformTeam(team));
-    }),
-    tap(teams => console.log('Transformed teams:', teams))
-  );
-}
+  constructor() {
+    console.log('Initializing TeamsListComponent');
+    this.teams$ = this.loadTeams().pipe(
+      catchError(error => {
+        console.error('Error loading teams:', error);
+        return of([]);
+      })
+    );
+  }
+
+  private loadTeams(): Observable<(Team & { creatorName: string })[]> {
+    return this.teamService.getTeams().pipe(
+      switchMap(teams => {
+        if (!teams?.length) return of([]);
+        
+        const teamObservables = teams.map(team => {
+          const transformedTeam = this.transformTeam(team);
+          
+          // Use createdId (from your Firebase) with fallback to creatorId
+          const creatorId = team.creatorId;
+          console.log('Fetching creator:', creatorId, 'for team:', team.id);
+          
+          if (!creatorId) {
+            console.warn('Team missing creator ID:', team.id);
+            return of({ ...transformedTeam, creatorName: 'Organizer' });
+          }
+
+          const userDocRef = doc(this.firestore, `users/${creatorId}`);
+          return docData(userDocRef).pipe(
+            map((user: any) => {
+              console.log('User data received:', user);
+              if (!user) {
+                console.warn('User document empty for ID:', creatorId);
+                return { ...transformedTeam, creatorName: 'Organizer' };
+              }
+              
+              // Check multiple possible name fields
+              const displayName = user.displayName || 
+                                 user.name || 
+                                 user.username || 
+                                 'Organizer';
+              
+              return {
+                ...transformedTeam,
+                creatorName: displayName
+              };
+            }),
+            catchError((error) => {
+              console.error('Error fetching user:', error);
+              return of({ ...transformedTeam, creatorName: 'Organizer' });
+            })
+          );
+        });
+
+        return combineLatest(teamObservables);
+      }),
+      tap(teams => console.log('Final teams data with creator names:', teams))
+    );
+  }
 
   private transformTeam(team: any): Team {
     return {
       ...team,
       datetime: this.convertTimestampToDate(team.datetime),
-      positionsFilled: team.positionsFilled || {} // Provide default empty object
+      positionsFilled: team.positionsFilled || {}
     };
   }
 
@@ -85,7 +135,29 @@ constructor() {
     };
     
     this.teams$ = this.teamService.getTeams(filters).pipe(
-      map(teams => teams.map(team => this.transformTeam(team)))
+      switchMap(teams => {
+        if (!teams?.length) return of([]);
+        
+        return combineLatest(
+          teams.map(team => {
+            const transformedTeam = this.transformTeam(team);
+            const creatorId =  team.creatorId;
+            
+            if (!creatorId) {
+              return of({ ...transformedTeam, creatorName: 'Organizer' });
+            }
+            
+            const userDocRef = doc(this.firestore, `users/${creatorId}`);
+            return docData(userDocRef).pipe(
+              map((user: any) => ({
+                ...transformedTeam,
+                creatorName: user?.displayName || user?.name || user?.username || 'Organizer'
+              })),
+              catchError(() => of({ ...transformedTeam, creatorName: 'Organizer' }))
+            );
+          })
+        );
+      })
     );
   }
 
@@ -95,6 +167,6 @@ constructor() {
       skillLevel: '',
       dateRange: { start: null, end: null }
     };
-    this.applyFilters();
+    this.teams$ = this.loadTeams();
   }
 }

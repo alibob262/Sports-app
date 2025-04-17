@@ -1,7 +1,6 @@
-// team-details.component.ts
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +10,8 @@ import { Team } from '../../models/team.model';
 import { RequestListComponent } from '../request-list/request-list.component';
 import { RequestToJoinDialog } from '../request-to-join-dialog/request-to-join-dialog.component';
 import { Auth } from '@angular/fire/auth';
-import { map } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Timestamp } from 'firebase/firestore';
 
 @Component({
   selector: 'app-team-details',
@@ -30,6 +30,7 @@ import { map } from 'rxjs';
 })
 export class TeamDetailsComponent {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private auth = inject(Auth);
   
   teamId = this.route.snapshot.params['id'];
@@ -43,22 +44,40 @@ export class TeamDetailsComponent {
     private dialog: MatDialog
   ) {}
 
-  
-  requestToJoin(team: Team) {
+  goBack(): void {
+    this.router.navigate(['/teams']);
+  }
+
+  // Convert Timestamp to Date if needed
+  convertToDate(datetime: Date | Timestamp): Date {
+    return datetime instanceof Timestamp ? datetime.toDate() : datetime;
+  }
+
+  // Safe property access
+  getOptional(obj: any, prop: string, fallback: any = ''): any {
+    return obj && obj.hasOwnProperty(prop) ? obj[prop] : fallback;
+  }
+
+  requestToJoin(team: Team): void {
     const dialogRef = this.dialog.open(RequestToJoinDialog, {
-      data: { availablePositions: this.getAvailablePositions(team) }
+      data: { 
+        availablePositions: this.getAvailablePositions(team),
+        teamDetails: {
+          sport: team.sport,
+          location: team.location.name,
+          datetime: this.convertToDate(team.datetime),
+          creatorName: this.getOptional(team, 'creatorName', 'Organizer')
+        }
+      }
     });
   
     dialogRef.afterClosed().subscribe((position: string) => {
-      if (position) {  // This check is crucial
-        console.log('Selected position:', position); // Add for debugging
+      if (position) {
         this.teamService.requestToJoin(team.id!, position).then(() => {
           console.log('Join request submitted successfully');
         }).catch(error => {
           console.error('Error submitting request:', error);
         });
-      } else {
-        console.log('Dialog closed without selection');
       }
     });
   }
