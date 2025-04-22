@@ -12,6 +12,7 @@ import { adminGuard } from './guards/admin.guard';
 import { ProfileComponent } from './components/profile/profile.component';
 import { TeamsListComponent } from './components/teams-list/teams-list.component';
 import { TeamDetailsComponent } from './components/team-details/team-details.component';
+import { PlayerRequestFormComponent } from './components/player-request-form/player-request-form.component';
 
 export const routes: Routes = [
   { 
@@ -65,6 +66,12 @@ export const routes: Routes = [
     component: ProfileComponent,
     canActivate: [authGuard, verifiedGuard],
     title: 'My Profile'
+  },
+  { 
+    path: 'player-request', 
+    component: PlayerRequestFormComponent,
+    canActivate: [authGuard, verifiedGuard],
+    title: 'Find a Team'
   },
   { 
     path: 'teams',

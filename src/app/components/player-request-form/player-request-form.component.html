@@ -1,0 +1,76 @@
+<div class="form-container">
+    <div class="form-header">
+      <button class="back-button" routerLink="/dashboard">
+        <span class="material-icons">arrow_back</span>
+        <span class="button-text">Back to Dashboard</span>
+      </button>
+      <h2 class="form-title">Find a Team</h2>
+    </div>
+   
+    <form (ngSubmit)="onSubmit()" class="request-form" #requestForm="ngForm">
+      <!-- User Info -->
+      <div class="form-field">
+        <label for="userName">Your Name</label>
+        <input id="userName" [value]="userName" readonly>
+        <div class="form-hint">Your profile name</div>
+      </div>
+  
+      <!-- Sport Selection -->
+      <div class="form-field">
+        <label for="sport">Sport</label>
+        <select 
+          id="sport" 
+          [(ngModel)]="sport" 
+          name="sport" 
+          required 
+          #sportField="ngModel">
+          <option value="" disabled selected>Select a sport</option>
+          <option *ngFor="let sport of sports" [value]="sport">
+            {{ sport | titlecase }}
+          </option>
+        </select>
+        <div class="form-hint">Select your preferred sport</div>
+        <div *ngIf="sportField.invalid && (sportField.dirty || sportField.touched)" class="form-error">
+          Please select a sport
+        </div>
+      </div>
+  
+      <!-- Position Input -->
+      <div class="form-field">
+        <label for="position">Position</label>
+        <input
+          id="position"
+          type="text"
+          [(ngModel)]="position"
+          name="position"
+          placeholder="GK, ST, PG, etc."
+          required
+          #positionField="ngModel"
+        >
+        <div class="form-hint">Enter your preferred position</div>
+        <div *ngIf="positionField.invalid && (positionField.dirty || positionField.touched)" class="form-error">
+          Position is required
+        </div>
+      </div>
+  
+      <!-- Submit Button -->
+      <div class="form-actions">
+        <button
+          type="submit"
+          [disabled]="!sport || !position || isSubmitting"
+          class="submit-button"
+        >
+          <span class="button-content">
+            <span *ngIf="!isSubmitting">Submit Request</span>
+            <span *ngIf="isSubmitting" class="spinner"></span>
+          </span>
+        </button>
+      </div>
+  
+      <!-- Status Message -->
+      <div *ngIf="submitMessage" class="status-message" [class.success]="isSuccess" [class.error]="!isSuccess">
+        <span class="status-icon material-icons">{{ isSuccess ? 'check_circle' : 'error' }}</span>
+        <span class="status-text">{{ submitMessage }}</span>
+      </div>
+    </form>
+  </div>

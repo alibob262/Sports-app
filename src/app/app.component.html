@@ -7,12 +7,13 @@
     <nav class="desktop-nav">
       <a routerLink="/courts" routerLinkActive="active">Courts</a>
       <a routerLink="/teams" 
-      routerLinkActive="active"
-      [routerLinkActiveOptions]="{exact: true}">View Teams</a>
-
+         routerLinkActive="active"
+         [routerLinkActiveOptions]="{exact: true}">View Teams</a>
       <a routerLink="/teams/new" 
-      routerLinkActive="active">Create Team</a>
-
+         routerLinkActive="active">Create Team</a>
+      <a routerLink="/player-request"
+         routerLinkActive="active"
+         *ngIf="isLoggedIn">Find a Team</a>
       
       <!-- Admin Link -->
       <a *ngIf="isLoggedIn && isAdmin" 
@@ -46,14 +47,17 @@
   <div class="mobile-nav" [class.active]="menuOpen">
     <a routerLink="/courts" (click)="toggleMenu()" routerLinkActive="active">Courts</a>
     <a routerLink="/teams" 
-   (click)="toggleMenu()"
-   routerLinkActive="active"
-   [routerLinkActiveOptions]="{exact: true}">View Teams</a>
-
-<a routerLink="/teams/new" 
-   (click)="toggleMenu()"
-   routerLinkActive="active">Create Team</a>
-
+       (click)="toggleMenu()"
+       routerLinkActive="active"
+       [routerLinkActiveOptions]="{exact: true}">View Teams</a>
+    <a routerLink="/teams/new" 
+       (click)="toggleMenu()"
+       routerLinkActive="active">Create Team</a>
+    <a routerLink="/player-request"
+       (click)="toggleMenu()"
+       routerLinkActive="active"
+       *ngIf="isLoggedIn">Find a Team</a>
+    
     <!-- Mobile Admin Link -->
     <a *ngIf="isLoggedIn && isAdmin" 
        routerLink="/admin" 
