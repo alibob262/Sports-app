@@ -89,4 +89,10 @@ export class TeamDetailsComponent {
       return filled < team.neededPlayers;
     });
   }
+
+
+  // Add this method to the component
+invitePlayer(team: Team): void {
+  this.router.navigate(['/teams', team.id, 'invite']);
+}
 }

@@ -58,15 +58,26 @@
         </div>
       </div>
 
-      <div class="action-section">
-        <button mat-raised-button 
-                color="primary" 
-                class="join-button"
-                (click)="requestToJoin(team)">
-          <mat-icon>group_add</mat-icon>
-          Request to Join
-        </button>
-      </div>
+      <!-- Add this near the action-section -->
+<div class="action-section">
+  <button mat-raised-button 
+          color="primary" 
+          class="join-button"
+          (click)="requestToJoin(team)"
+          *ngIf="!(isTeamOwner$ | async)">
+    <mat-icon>group_add</mat-icon>
+    Request to Join
+  </button>
+
+  <button mat-raised-button 
+          color="accent"
+          class="invite-button"
+          (click)="invitePlayer(team)"
+          *ngIf="isTeamOwner$ | async">
+    <mat-icon>person_add</mat-icon>
+    Invite Player
+  </button>
+</div>
     </mat-card-content>
   </mat-card>
 

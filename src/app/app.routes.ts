@@ -13,6 +13,7 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { TeamsListComponent } from './components/teams-list/teams-list.component';
 import { TeamDetailsComponent } from './components/team-details/team-details.component';
 import { PlayerRequestFormComponent } from './components/player-request-form/player-request-form.component';
+import { PlayerInviteComponent } from './components/player-invite/player-invite.component';
 
 export const routes: Routes = [
   { 
@@ -93,6 +94,11 @@ export const routes: Routes = [
         title: 'Team Details'
       }
     ]
+  },
+  {
+    path: 'teams/:id/invite',
+    component: PlayerInviteComponent,
+    canActivate: [authGuard, verifiedGuard]
   },
   { 
     path: '**', 

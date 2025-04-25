@@ -5,6 +5,17 @@ import { PlayerRequestService } from '../../services/player-request.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
+interface SportOption {
+  value: string;
+  displayName: string;
+  positions: PositionOption[];
+}
+
+interface PositionOption {
+  value: string;
+  displayName: string;
+}
+
 @Component({
   selector: 'app-player-request-form',
   standalone: true,
@@ -23,7 +34,51 @@ export class PlayerRequestFormComponent implements OnInit {
   // Form fields
   sport = '';
   position = '';
-  sports = ['football', 'basketball', 'volleyball', 'tennis'];
+  availablePositions: PositionOption[] = [];
+  
+  // Sport options with positions
+  sports: SportOption[] = [
+    {
+      value: 'football',
+      displayName: 'Football',
+      positions: [
+        { value: 'goalkeeper', displayName: 'Goalkeeper' },
+        { value: 'defender', displayName: 'Defender' },
+        { value: 'midfielder', displayName: 'Midfielder' },
+        { value: 'attacker', displayName: 'Attacker' }
+      ]
+    },
+    {
+      value: 'basketball',
+      displayName: 'Basketball',
+      positions: [
+        { value: 'point-guard', displayName: 'Point Guard' },
+        { value: 'shooting-guard', displayName: 'Shooting Guard' },
+        { value: 'small-forward', displayName: 'Small Forward' },
+        { value: 'power-forward', displayName: 'Power Forward' },
+        { value: 'center', displayName: 'Center' }
+      ]
+    },
+    {
+      value: 'volleyball',
+      displayName: 'Volleyball',
+      positions: [
+        { value: 'setter', displayName: 'Setter' },
+        { value: 'outside-hitter', displayName: 'Outside Hitter' },
+        { value: 'middle-blocker', displayName: 'Middle Blocker' },
+        { value: 'opposite-hitter', displayName: 'Opposite Hitter' },
+        { value: 'libero', displayName: 'Libero' }
+      ]
+    },
+    {
+      value: 'tennis',
+      displayName: 'Tennis',
+      positions: [
+        { value: 'singles', displayName: 'Singles' },
+        { value: 'doubles', displayName: 'Doubles' }
+      ]
+    }
+  ];
  
   // User info
   userName = '';
@@ -35,9 +90,18 @@ export class PlayerRequestFormComponent implements OnInit {
   submitMessage = '';
   
   ngOnInit(): void {
-    // Get user info on component initialization
     this.userName = this.auth.currentUser?.displayName || 'Unknown';
     this.userId = this.auth.currentUser?.uid || '';
+  }
+  
+  onSportChange(): void {
+    this.position = ''; // Reset position when sport changes
+    const selectedSport = this.sports.find(s => s.value === this.sport);
+    this.availablePositions = selectedSport ? [...selectedSport.positions] : [];
+  }
+  
+  selectPosition(position: string): void {
+    this.position = position;
   }
   
   async onSubmit() {
@@ -61,6 +125,7 @@ export class PlayerRequestFormComponent implements OnInit {
         this.sport = '';
         this.position = '';
         this.submitMessage = '';
+        this.availablePositions = [];
       }, 3000);
     } catch (error) {
       this.isSuccess = false;

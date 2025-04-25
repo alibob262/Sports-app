@@ -53,7 +53,6 @@ export class TeamsListComponent {
   };
 
   constructor() {
-    console.log('Initializing TeamsListComponent');
     this.teams$ = this.loadTeams().pipe(
       catchError(error => {
         console.error('Error loading teams:', error);
@@ -72,7 +71,6 @@ export class TeamsListComponent {
           
           // Use createdId (from your Firebase) with fallback to creatorId
           const creatorId = team.creatorId;
-          console.log('Fetching creator:', creatorId, 'for team:', team.id);
           
           if (!creatorId) {
             console.warn('Team missing creator ID:', team.id);
@@ -82,7 +80,6 @@ export class TeamsListComponent {
           const userDocRef = doc(this.firestore, `users/${creatorId}`);
           return docData(userDocRef).pipe(
             map((user: any) => {
-              console.log('User data received:', user);
               if (!user) {
                 console.warn('User document empty for ID:', creatorId);
                 return { ...transformedTeam, creatorName: 'Organizer' };

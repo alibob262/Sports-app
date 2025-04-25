@@ -1,0 +1,49 @@
+<div class="invite-container">
+    <button mat-button (click)="goBack()" class="back-button">
+      <mat-icon>arrow_back</mat-icon> Back to Team
+    </button>
+  
+    <mat-card *ngIf="team$ | async as team" class="invite-card">
+      <mat-card-header>
+        <mat-card-title>Invite Players to {{ team.sport | titlecase }} Team</mat-card-title>
+      </mat-card-header>
+  
+      <mat-card-content>
+        <div class="position-selector">
+          <h3>Select Position to Fill:</h3>
+          <div class="position-buttons">
+            <button *ngFor="let pos of positionMap[team.sport]"
+                    mat-raised-button
+                    [class.selected]="selectedPosition === pos.value"
+                    (click)="selectPosition(pos.value)">
+              {{ pos.displayName }}
+            </button>
+          </div>
+        </div>
+  
+        <div class="player-list" *ngIf="selectedPosition">
+          <h3>Available {{ selectedPosition | titlecase }}s</h3>
+          
+          <mat-spinner *ngIf="isLoading" diameter="40"></mat-spinner>
+          
+          <div *ngIf="!isLoading && availablePlayers.length === 0" class="no-players">
+            No players available for this position
+          </div>
+  
+          <mat-card *ngFor="let player of availablePlayers" class="player-card">
+            <mat-card-content>
+              <div class="player-info">
+                <h4>{{ player.userName }}</h4>
+                <p>Looking for: {{ player.sport | titlecase }} team</p>
+              </div>
+              <button mat-raised-button 
+                      color="primary"
+                      (click)="invitePlayer(player)">
+                Invite
+              </button>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
