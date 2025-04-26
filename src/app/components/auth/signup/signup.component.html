@@ -1,5 +1,7 @@
 <form (ngSubmit)="onSignup()" class="form-container">
-    <h2 class="form-title">Signup</h2>
+  <h2 class="form-title">Signup</h2>
+  
+  <div class="form-group">
     <input 
       type="text" 
       [(ngModel)]="username" 
@@ -11,9 +13,11 @@
       class="form-input"
     >
     <div *ngIf="usernameInput.invalid && usernameInput.touched" class="error-message">
-      Username must be at least 3 characters.
+      Username must be at least 3 characters
     </div>
-    
+  </div>
+  
+  <div class="form-group">
     <input 
       type="email" 
       [(ngModel)]="email" 
@@ -24,9 +28,11 @@
       class="form-input"
     >
     <div *ngIf="emailInput.invalid && emailInput.touched" class="error-message">
-      Please enter a valid email.
+      Please enter a valid email
     </div>
-  
+  </div>
+
+  <div class="form-group">
     <input 
       type="password" 
       [(ngModel)]="password" 
@@ -38,10 +44,19 @@
       class="form-input"
     >
     <div *ngIf="passwordInput.invalid && passwordInput.touched" class="error-message">
-      Password must be at least 6 characters.
+      Password must be at least 6 characters
     </div>
-  
-    <button type="submit" [disabled]="!username || !email || password.length < 6" class="btn btn-primary">
-      Signup
-    </button>
-  </form>
+  </div>
+
+  <button type="submit" [disabled]="isLoading" class="btn btn-primary">
+    {{ isLoading ? 'Creating account...' : 'Signup' }}
+  </button>
+
+  <div class="divider">
+    <span>or</span>
+  </div>
+
+  <div class="auth-links">
+    <p>Already have an account? <a routerLink="/login" class="auth-link">Log in</a></p>
+  </div>
+</form>

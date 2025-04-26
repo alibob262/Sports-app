@@ -14,6 +14,7 @@ import { TeamsListComponent } from './components/teams-list/teams-list.component
 import { TeamDetailsComponent } from './components/team-details/team-details.component';
 import { PlayerRequestFormComponent } from './components/player-request-form/player-request-form.component';
 import { PlayerInviteComponent } from './components/player-invite/player-invite.component';
+import { NameSetupGuard } from './guards/name-setup.guard';
 
 export const routes: Routes = [
   { 
@@ -24,7 +25,7 @@ export const routes: Routes = [
   { 
     path: 'dashboard', 
     component: DashboardComponent, 
-    canActivate: [authGuard, verifiedGuard],
+    canActivate: [authGuard, verifiedGuard,NameSetupGuard],
     title: 'Dashboard' 
   },
   { 
@@ -59,7 +60,7 @@ export const routes: Routes = [
   { 
     path: 'courts', 
     component: CourtListComponent,
-    canActivate: [authGuard, verifiedGuard],
+    canActivate: [authGuard, verifiedGuard,NameSetupGuard],
     title: 'Find Courts' 
   },
   { 
@@ -71,12 +72,12 @@ export const routes: Routes = [
   { 
     path: 'player-request', 
     component: PlayerRequestFormComponent,
-    canActivate: [authGuard, verifiedGuard],
+    canActivate: [authGuard, verifiedGuard,NameSetupGuard],
     title: 'Find a Team'
   },
   { 
     path: 'teams',
-    canActivate: [authGuard, verifiedGuard],
+    canActivate: [authGuard, verifiedGuard,NameSetupGuard],
     children: [
       { 
         path: '', 
@@ -98,7 +99,7 @@ export const routes: Routes = [
   {
     path: 'teams/:id/invite',
     component: PlayerInviteComponent,
-    canActivate: [authGuard, verifiedGuard]
+    canActivate: [authGuard, verifiedGuard,NameSetupGuard]
   },
   { 
     path: '**', 

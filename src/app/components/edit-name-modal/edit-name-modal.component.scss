@@ -1,0 +1,10 @@
+/* edit-name-modal.component.scss */
+.required-message {
+    color: #f44336;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+  }
+  
+  mat-dialog-actions {
+    justify-content: flex-end;
+  }

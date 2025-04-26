@@ -104,8 +104,7 @@ export class TeamsListComponent {
         });
 
         return combineLatest(teamObservables);
-      }),
-      tap(teams => console.log('Final teams data with creator names:', teams))
+      })
     );
   }
 

@@ -1,8 +1,16 @@
-<h2 mat-dialog-title>Edit Name</h2>
+<!-- edit-name-modal.component.html -->
+<h2 mat-dialog-title>
+  {{ data.isForced ? 'Set Your Name' : 'Edit Name' }}
+</h2>
 <mat-dialog-content>
-  <input matInput [(ngModel)]="newName" placeholder="Enter your name">
+  <p *ngIf="data.isForced" class="required-message">
+    Please set your name before continuing.
+  </p>
+  <input matInput [(ngModel)]="newName" placeholder="Enter your name" required>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancel</button>
-  <button mat-raised-button color="primary" (click)="onSave()">Save</button>
+  <button *ngIf="!data.isForced" mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="!newName.trim()">
+    {{ data.isForced ? 'Continue' : 'Save' }}
+  </button>
 </mat-dialog-actions>
