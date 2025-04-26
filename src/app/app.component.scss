@@ -1,56 +1,84 @@
-/* Admin Link Styles */
-.admin-link {
-    color: #ff5722;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
+/* Logo Styles */
+.logo-link {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  
+  .logo-img {
+    height: 40px; /* Adjust this value to your preference */
+    width: auto;
+    object-fit: contain;
+    transition: transform 0.3s ease;
     
     &:hover {
-      color: #e64a19;
-    }
-    
-    &.active {
-      border-bottom: 2px solid #ff5722;
-    }
-  
-    &::before {
-      content: "⚙️";
-      margin-right: 6px;
-      font-size: 1.1em;
+      transform: scale(1.05);
     }
   }
+}
+
+.mobile-logo {
+  margin-bottom: 2rem;
   
-  /* Mobile Admin Link */
-  .mobile-nav .admin-link {
-    color: #ff5722;
-    font-weight: bold;
-    padding: 12px 0;
-    
-    &::before {
-      content: "👑";
-      margin-right: 8px;
-    }
+  .logo-img {
+    height: 50px;
+    width: auto;
+    max-width: 100%;
+  }
+}
+
+.footer-logo {
+  height: 30px;
+  width: auto;
+  margin-bottom: 1rem;
+}
+
+/* Admin Link Styles */
+.admin-link {
+  color: #ff5722;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  
+  &:hover {
+    color: #e64a19;
   }
   
-  /* Responsive Adjustments */
-  @media (max-width: 768px) {
-    .desktop-nav .admin-link {
-      display: none;
-    }
-  }
-  
-  @media (min-width: 769px) {
-    .mobile-nav .admin-link {
-      display: none;
-    }
+  &.active {
+    border-bottom: 2px solid #ff5722;
   }
 
-  // .active {
-  //   font-weight: bold;
-  //   border-bottom: 2px solid #3f51b5;
-  // }
+  &::before {
+    content: "⚙️";
+    margin-right: 6px;
+    font-size: 1.1em;
+  }
+}
+
+/* Mobile Admin Link */
+.mobile-nav .admin-link {
+  color: #ff5722;
+  font-weight: bold;
+  padding: 12px 0;
   
-  // /* For mobile */
-  // .mobile-nav .active {
-  //   background-color: rgba(63, 81, 181, 0.1);
-  // }
+  &::before {
+    content: "👑";
+    margin-right: 8px;
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .desktop-nav .admin-link {
+    display: none;
+  }
+  
+  .logo-link .logo-img {
+    height: 35px; /* Slightly smaller on mobile */
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-nav .admin-link {
+    display: none;
+  }
+}

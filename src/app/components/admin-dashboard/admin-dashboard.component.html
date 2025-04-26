@@ -1,1 +1,101 @@
-<p>admin-dashboard works!</p>
+<div class="admin-dashboard">
+    <mat-card *ngIf="!isLoading && isAdmin">
+      <mat-card-header>
+        <mat-card-title>Admin Dashboard</mat-card-title>
+        <mat-card-subtitle>Full System Management</mat-card-subtitle>
+      </mat-card-header>
+  
+      <mat-tab-group [(selectedIndex)]="activeTab">
+        <!-- Users Tab -->
+        <mat-tab label="Users">
+          <div class="data-section">
+            <h3>Registered Users ({{ (users$ | async)?.length }})</h3>
+            <div *ngIf="users$ | async as users" class="data-grid">
+              <mat-card *ngFor="let user of users" class="data-card">
+                <mat-card-content>
+                  <p><strong>Username:</strong> {{ user.username }}</p>
+                  <p><strong>Email:</strong> {{ user.email }}</p>
+                  <p><strong>Display Name:</strong> {{ user.displayName }}</p>
+                  <p><strong>Joined:</strong> {{ formatDate(user.createdAt) }}</p>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </mat-tab>
+  
+        <!-- Courts Tab -->
+        <mat-tab label="Courts">
+          <div class="data-section">
+            <h3>Sports Courts ({{ (courts$ | async)?.length }})</h3>
+            <div *ngIf="courts$ | async as courts" class="data-grid">
+              <mat-card *ngFor="let court of courts" class="data-card">
+                <mat-card-content>
+                  <p><strong>Name:</strong> {{ court.name }}</p>
+                  <p><strong>Location:</strong> {{ court.location.address }}</p>
+                  <p><strong>Sports:</strong> 
+                    <mat-chip-listbox>
+                      <mat-chip *ngFor="let sport of court.sports">{{ sport }}</mat-chip>
+                    </mat-chip-listbox>
+                  </p>
+                  <p><strong>Amenities:</strong> 
+                    <mat-chip-listbox>
+                      <mat-chip *ngFor="let amenity of court.amenities">{{ amenity }}</mat-chip>
+                    </mat-chip-listbox>
+                  </p>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </mat-tab>
+  
+        <!-- Teams Tab -->
+        <mat-tab label="Teams">
+          <div class="data-section">
+            <h3>Active Teams ({{ (teams$ | async)?.length }})</h3>
+            <div *ngIf="teams$ | async as teams" class="data-grid">
+              <mat-card *ngFor="let team of teams" class="data-card">
+                <mat-card-content>
+                  <p><strong>Name:</strong> {{ team.location.name }}</p>
+                  <p><strong>Sport:</strong> {{ team.sport }}</p>
+                  <p><strong>Status:</strong> {{ team.status | titlecase }}</p>
+                  <p><strong>Players:</strong> {{ team.currentPlayers }}/{{ team.neededPlayers }}</p>
+                  <p><strong>Skill Level:</strong> {{ team.skillLevel | titlecase }}</p>
+                  <p><strong>Created:</strong> {{ formatDate(team.createdAt) }}</p>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </mat-tab>
+  
+        <!-- Player Requests Tab -->
+        <mat-tab label="Player Requests">
+          <div class="data-section">
+            <h3>Player Requests ({{ (playerRequests$ | async)?.length }})</h3>
+            <div *ngIf="playerRequests$ | async as requests" class="data-grid">
+              <mat-card *ngFor="let request of requests" class="data-card">
+                <mat-card-content>
+                  <p><strong>Player:</strong> {{ request.userName }}</p>
+                  <p><strong>Position:</strong> {{ request.position | titlecase }}</p>
+                  <p><strong>Sport:</strong> {{ request.sport | titlecase }}</p>
+                  <p><strong>Requested:</strong> {{ formatDate(request.createdAt) }}</p>
+                  <mat-chip-listbox>
+                    <mat-chip [color]="request.userId ? 'primary' : 'warn'">
+                      {{ request.userId ? 'Registered User' : 'Guest' }}
+                    </mat-chip>
+                  </mat-chip-listbox>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card>
+  
+    <div *ngIf="!isLoading && !isAdmin" class="unauthorized">
+      <mat-icon>warning</mat-icon>
+      <h3>Unauthorized Access</h3>
+      <p>You don't have administrator privileges to view this page.</p>
+    </div>
+  
+    <mat-spinner *ngIf="isLoading" class="loading-spinner"></mat-spinner>
+  </div>

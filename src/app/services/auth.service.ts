@@ -8,16 +8,25 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
   User,
-  onAuthStateChanged
+  onAuthStateChanged,
+  user
 } from '@angular/fire/auth';
-import { Firestore, doc, setDoc, updateDoc,getDoc } from '@angular/fire/firestore';
+import { Firestore, doc, setDoc, updateDoc, getDoc } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth = inject(Auth);
   private firestore = inject(Firestore);
   private router = inject(Router);
+
+  // Add this observable for current user
+  currentUser$: Observable<User | null>;
+
+  constructor() {
+    this.currentUser$ = user(this.auth);
+  }
 
   async getUserRoles(uid: string): Promise<{ user: boolean, admin: boolean }> {
     const userDoc = await getDoc(doc(this.firestore, 'users', uid));
@@ -33,7 +42,6 @@ export class AuthService {
     try {
       const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
       
-      // Automatically set all new users as non-admins
       await setDoc(doc(this.firestore, 'users', userCredential.user.uid), {
         username,
         email,
@@ -41,8 +49,8 @@ export class AuthService {
         createdAt: new Date(),
         lastLogin: null,
         roles: {
-          user: true,    // All new users get this
-          admin: false   // Default to false for everyone
+          user: true,
+          admin: false
         }
       });
   

@@ -1,0 +1,54 @@
+.invitation-container {
+    padding: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    
+    h2 {
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+  }
+  
+  .invitation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  
+  .invitation-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    
+    mat-card-content {
+      flex-grow: 1;
+      
+      p {
+        margin: 8px 0;
+      }
+    }
+  }
+  
+  .no-invitations {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.54);
+    
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .invitation-grid {
+      grid-template-columns: 1fr;
+    }
+  }

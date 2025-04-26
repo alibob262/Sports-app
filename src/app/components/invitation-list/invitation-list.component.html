@@ -1,0 +1,42 @@
+<div class="invitation-container">
+    <h2>Your Invitations</h2>
+    
+  
+    <div *ngIf="invitations$ | async as invitations" class="invitation-grid">
+      <ng-container *ngIf="invitations.length > 0; else noInvitations">
+        <mat-card *ngFor="let invitation of invitations" class="invitation-card">
+          <mat-card-header>
+            <mat-card-title>Team Invitation</mat-card-title>
+            <mat-card-subtitle>
+              Position: {{ invitation.position | titlecase }} 
+              <span *ngIf="invitation.teamName">for {{ invitation.teamName }}</span>
+            </mat-card-subtitle>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <p><strong>Sport:</strong> {{ invitation.sport | titlecase }}</p>
+            <p><strong>Sent:</strong> {{ formatDate(invitation.sentAt) }}</p>
+            <p><strong>Expires:</strong> {{ formatDate(invitation.expiresAt) }}</p>
+          </mat-card-content>
+          
+          <mat-divider></mat-divider>
+          
+          <mat-card-actions align="end">
+            <button mat-button color="warn" (click)="rejectInvitation(invitation)">
+              <mat-icon>cancel</mat-icon> Reject
+            </button>
+            <button mat-raised-button color="primary" (click)="acceptInvitation(invitation)">
+              <mat-icon>check_circle</mat-icon> Accept
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </ng-container>
+      
+      <ng-template #noInvitations>
+        <div class="no-invitations">
+          <mat-icon>inbox</mat-icon>
+          <p>You don't have any pending invitations</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>

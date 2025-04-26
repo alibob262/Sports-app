@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Firestore, doc, setDoc, collection } from '@angular/fire/firestore';
+import { Firestore, doc, setDoc, collection, updateDoc, query, where, getDocs } from '@angular/fire/firestore';
 import { NotificationService } from './notification.service';
 import { EmailService } from './email.service';
 
@@ -15,6 +15,19 @@ interface InvitationData {
   teamData: TeamData;
 }
 
+export interface Invitation {
+  id: string;
+  teamId: string;
+  playerId: string;
+  position: string;
+  sport: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'expired';
+  sentAt: any;
+  expiresAt: any;
+  respondedAt?: any;
+  teamName?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class InvitationService {
   private firestore = inject(Firestore);
@@ -28,7 +41,6 @@ export class InvitationService {
     teamData: TeamData
   ): Promise<string> {
     try {
-      // 1. Create invitation document
       const invitationRef = doc(collection(this.firestore, 'invitations'));
       const invitationId = invitationRef.id;
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -44,7 +56,6 @@ export class InvitationService {
         expiresAt
       });
 
-      // 2. Create notification for player
       await this.notificationService.sendNotification(
         playerId,
         `You've been invited to join ${teamData.name || teamData.sport + ' team'} as ${position}`,
@@ -57,7 +68,6 @@ export class InvitationService {
         }
       );
 
-      // 3. Send email notification
       await this.emailService.sendInvitationEmail(playerId, {
         invitationId,
         teamId,
@@ -72,5 +82,30 @@ export class InvitationService {
       console.error('Full invitation error:', error);
       throw new Error('Failed to send invitation');
     }
+  }
+
+  async updateInvitationStatus(invitationId: string, status: 'accepted' | 'rejected'): Promise<void> {
+    try {
+      const invitationRef = doc(this.firestore, `invitations/${invitationId}`);
+      await updateDoc(invitationRef, { 
+        status,
+        respondedAt: new Date() 
+      });
+    } catch (error) {
+      console.error('Error updating invitation status:', error);
+      throw new Error('Failed to update invitation status');
+    }
+  }
+
+  async getInvitationsForPlayer(playerId: string): Promise<Invitation[]> {
+    const invitationsRef = collection(this.firestore, 'invitations');
+    const q = query(
+      invitationsRef, 
+      where('playerId', '==', playerId),
+      where('status', '==', 'pending')
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Invitation));
   }
 }
