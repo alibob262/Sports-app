@@ -25,6 +25,7 @@ import { MatOptionModule } from '@angular/material/core';
 
 // ReactiveFormsModule
 import { ReactiveFormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -44,7 +45,8 @@ export const appConfig: ApplicationConfig = {
       MatDialog,
       MatProgressSpinnerModule,
       MatOptionModule,
-      ReactiveFormsModule 
+      ReactiveFormsModule,
+      HttpClientModule 
     ),
     provideFirebaseApp(() => initializeApp({ 
       projectId: "malaabna-sports-app-2025",

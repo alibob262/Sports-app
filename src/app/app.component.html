@@ -16,6 +16,7 @@
       <a routerLink="/player-request"
          routerLinkActive="active"
          *ngIf="isLoggedIn">Looking for a Team</a>
+         <a routerLink="/chat" routerLinkActive="active">Chatbot</a>
       
       <!-- Admin Link -->
       <a *ngIf="isLoggedIn && isAdmin" 
@@ -60,6 +61,7 @@
        (click)="toggleMenu()"
        routerLinkActive="active"
        *ngIf="isLoggedIn">Looking for a Team</a>
+       <a routerLink="/chat" routerLinkActive="active">Chatbot</a>
     
     <!-- Mobile Admin Link -->
     <a *ngIf="isLoggedIn && isAdmin" 

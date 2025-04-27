@@ -15,6 +15,7 @@ import { TeamDetailsComponent } from './components/team-details/team-details.com
 import { PlayerRequestFormComponent } from './components/player-request-form/player-request-form.component';
 import { PlayerInviteComponent } from './components/player-invite/player-invite.component';
 import { NameSetupGuard } from './guards/name-setup.guard';
+import { ChatbotComponent } from './components/chatbot/chatbot.component';
 
 export const routes: Routes = [
   { 
@@ -100,6 +101,10 @@ export const routes: Routes = [
     path: 'teams/:id/invite',
     component: PlayerInviteComponent,
     canActivate: [authGuard, verifiedGuard,NameSetupGuard]
+  },
+  { 
+    path: 'chat', 
+    component: ChatbotComponent 
   },
   { 
     path: '**', 
