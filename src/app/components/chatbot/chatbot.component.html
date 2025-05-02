@@ -1,20 +1,31 @@
 <div class="chatbot-container">
-    <h2>Chat with the Bot</h2>
-    <div class="chat-box">
-      <div class="user-message">
-        <label for="messageInput">Your Message:</label>
-        <input
-          id="messageInput"
-          type="text"
-          [(ngModel)]="userMessage"
-          placeholder="Type your message..."
-        />
-      </div>
-      <button (click)="sendMessage()">Send</button>
-    </div>
+  <h2>Chat with the Bot</h2>
   
-    <div *ngIf="chatbotResponse" class="chatbot-response">
-      <p><strong>Bot:</strong> {{ chatbotResponse }}</p>
+  <div class="messages-container">
+    <div *ngFor="let message of messages" class="message" [class.user]="message.sender === 'user'">
+      <div class="message-content">
+        <strong>{{message.sender === 'user' ? 'You' : 'Bot'}}:</strong>
+        <p>{{message.text}}</p>
+      </div>
+      <small class="timestamp">{{message.timestamp | date:'shortTime'}}</small>
+    </div>
+    
+    <div *ngIf="isLoading" class="loading-message">
+      <div class="typing-indicator">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
     </div>
   </div>
-  
+
+  <div class="input-area">
+    <input
+      type="text"
+      [(ngModel)]="userMessage"
+      placeholder="Type your message..."
+      (keyup.enter)="sendMessage()"
+    />
+    <button (click)="sendMessage()" [disabled]="isLoading || !userMessage.trim()">Send</button>
+  </div>
+</div>

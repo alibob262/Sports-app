@@ -5,6 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
+interface ChatMessage {
+  sender: 'user' | 'bot';
+  text: string;
+  timestamp: Date;
+}
+
 @Component({
   selector: 'app-chatbot',
   standalone: true,
@@ -14,23 +20,27 @@ import { map, switchMap } from 'rxjs/operators';
 })
 export class ChatbotComponent {
   userMessage = '';
-  chatbotResponse = '';
+  messages: ChatMessage[] = [];
   isLoading = false;
 
   private chatbotService = inject(ChatbotService);
 
   sendMessage() {
     if (!this.userMessage.trim()) {
-      this.chatbotResponse = 'Please enter a message!';
+      this.addBotMessage('Please enter a message!');
       return;
     }
 
+    // Add user message to chat
+    this.addUserMessage(this.userMessage);
+    const currentMessage = this.userMessage;
+    this.userMessage = '';
     this.isLoading = true;
 
-    this.chatbotService.sendChatMessage(this.userMessage).pipe(
+    this.chatbotService.sendChatMessage(currentMessage).pipe(
       switchMap(openAIResponse => {
-        if (this.userMessage.toLowerCase().includes('looking for a team')) {
-          return this.chatbotService.getPlayerRequests().pipe(
+        if (currentMessage.toLowerCase().includes('looking for a team')) {
+          return this.chatbotService.getAvailablePlayers().pipe(
             map(requests => {
               if (requests.length === 0) {
                 return 'No players are currently looking for teams.';
@@ -44,15 +54,40 @@ export class ChatbotComponent {
       })
     ).subscribe({
       next: (response) => {
-        this.chatbotResponse = response;
+        this.addBotMessage(response);
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Error:', error);
-        this.chatbotResponse = 'Sorry, I could not process your request.';
+        this.addBotMessage('Sorry, I could not process your request.');
         this.isLoading = false;
       }
     });
+  }
+
+  private addUserMessage(text: string) {
+    this.messages.push({
+      sender: 'user',
+      text: text,
+      timestamp: new Date()
+    });
+    this.scrollToBottom();
+  }
+
+  private addBotMessage(text: string) {
+    this.messages.push({
+      sender: 'bot',
+      text: text,
+      timestamp: new Date()
+    });
+    this.scrollToBottom();
+  }
+
+  private scrollToBottom() {
+    setTimeout(() => {
+      const chatBox = document.querySelector('.messages-container');
+      if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+    }, 100);
   }
 
   private formatPlayerRequests(requests: any[]): string {
