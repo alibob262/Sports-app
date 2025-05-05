@@ -2,8 +2,8 @@ import { Component, inject } from '@angular/core';
 import { ChatbotService } from '../../services/chatbot.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil, debounceTime } from 'rxjs/operators';
 
 interface ChatMessage {
   sender: 'user' | 'bot';
@@ -22,44 +22,38 @@ export class ChatbotComponent {
   userMessage = '';
   messages: ChatMessage[] = [];
   isLoading = false;
+  isActive = true;
+  private destroy$ = new Subject<void>();
 
   private chatbotService = inject(ChatbotService);
 
-  sendMessage() {
-    if (!this.userMessage.trim()) {
-      this.addBotMessage('Please enter a message!');
-      return;
-    }
+  ngOnInit() {
+    this.addBotMessage('Welcome to Malaabna! 🏟️\nWhere sports dreams become reality!\n\nYalla, how can I help? Find courts, players, or teams?');
+  }
 
-    // Add user message to chat
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  sendMessage() {
+    if (!this.userMessage.trim() || this.isLoading) return;
+
     this.addUserMessage(this.userMessage);
     const currentMessage = this.userMessage;
     this.userMessage = '';
     this.isLoading = true;
 
     this.chatbotService.sendChatMessage(currentMessage).pipe(
-      switchMap(openAIResponse => {
-        if (currentMessage.toLowerCase().includes('looking for a team')) {
-          return this.chatbotService.getAvailablePlayers().pipe(
-            map(requests => {
-              if (requests.length === 0) {
-                return 'No players are currently looking for teams.';
-              }
-              return this.formatPlayerRequests(requests);
-            })
-          );
-        } else {
-          return of(openAIResponse);
-        }
-      })
+      takeUntil(this.destroy$),
+      debounceTime(300) // Prevent rapid firing
     ).subscribe({
       next: (response) => {
         this.addBotMessage(response);
         this.isLoading = false;
       },
-      error: (error) => {
-        console.error('Error:', error);
-        this.addBotMessage('Sorry, I could not process your request.');
+      error: () => {
+        this.addBotMessage("Yalla, something went wrong! Try again.");
         this.isLoading = false;
       }
     });
@@ -88,11 +82,5 @@ export class ChatbotComponent {
       const chatBox = document.querySelector('.messages-container');
       if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
     }, 100);
-  }
-
-  private formatPlayerRequests(requests: any[]): string {
-    return requests.map(request => 
-      `Name: ${request.userName}\nSport: ${request.sport}\nPosition: ${request.position}\n\n`
-    ).join('');
   }
 }

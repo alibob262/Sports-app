@@ -1,340 +1,256 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, from } from 'rxjs';
-import { Firestore, collection, collectionData, addDoc, query, where, doc, getDoc } from '@angular/fire/firestore';
-import { map, catchError, tap, switchMap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { Firestore, collection, collectionData, query, where } from '@angular/fire/firestore';
+import { map, catchError, switchMap, retryWhen, delay, take, tap } from 'rxjs/operators';
 
-interface ReservationData {
-  location?: string;
-  date?: string;
-  time?: string;
-  sport?: string;
-  courtId?: string;
-  courtName?: string;
-}
-
-interface ReservationState {
-  inProgress: boolean;
-  collectedData: ReservationData;
-  currentStep: number;
-}
 interface Court {
   id: string;
   name: string;
   location: {
     address: string;
-    area?: string;
-    [key: string]: any; // For any additional properties
+    geo?: { latitude: number; longitude: number };
+    phone?: string;
   };
   amenities?: string[];
-  contact?: {
-    phone?: string;
-    [key: string]: any;
-  };
-  sportType: string;
-  [key: string]: any; // For any other properties
+  images?: string[];
+  sports?: string[];
+  type?: string;
+  distance?: number;
 }
+
+interface PlayerRequest {
+  id: string;
+  userName: string;
+  sport: string;
+  position?: string;
+  createdAt?: any;
+  skillLevel?: string;
+}
+
+interface Team {
+  id: string;
+  name: string;
+  sport: string;
+  positionsNeeded?: string[];  // Firebase field
+  skillLevel?: string;
+  status: string; // "forming" means recruiting
+  location?: {
+    address?: string;
+    courtId?: string;
+  };
+}
+
+interface UserLocation {
+  address?: string;
+  coordinates?: { latitude: number; longitude: number };
+}
+
+interface ConversationState {
+  context?: 'courtLocation' | 'playerSearch' | 'teamSearch';
+  userLocation?: UserLocation;
+  sportPreference?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class ChatbotService {
   private firestore = inject(Firestore);
   private apiUrl = 'https://api.openai.com/v1/chat/completions';
-  private apiKey = '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';
-
-
-  private playerSearchPhrases = [
-    'find player', 'looking for player', 'need player', 
-    'available players', 'players without team', 'free agents',
-    'who needs team', 'search player', 'player search',
-  ];
-
-  private teamSearchPhrases = [
-    'find team', 'looking for team', 'need team',
-    'available teams', 'teams recruiting', 'join team',
-    'who needs players', 'search team', 'team search'
-  ];
-
-  private reservationState: ReservationState = {
-    inProgress: false,
-    collectedData: {},
-    currentStep: 0
-  };
+  private apiKey = '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'; // 👈 Replace with your key
+  private lastRequestTime = 0;
+  private requestDelay = 1000;
+  private cache = new Map<string, string>();
+  private conversationState: ConversationState = {};
 
   constructor(private http: HttpClient) {}
 
   sendChatMessage(prompt: string): Observable<string> {
-    const lowerPrompt = prompt.toLowerCase();
-    
-    // Check if we're in reservation flow
-    if (this.reservationState.inProgress) {
-      // Check if user is selecting a court number
-      const courtNumber = parseInt(prompt);
-      if (!isNaN(courtNumber)) {
-        return this.confirmReservation(courtNumber);
-      }
-      return this.handleReservationFlow(prompt);
+    const cachedResponse = this.getCachedResponse(prompt);
+    if (cachedResponse) {
+      return of(cachedResponse);
     }
-    
-    // Check for court reservation requests
-    if (this.isCourtReservationRequest(lowerPrompt)) {
-      return this.startCourtReservation();
-    }
-    
-    // Check for player requests
-    if (this.isFootballPlayerRequest(lowerPrompt)) {
-      return this.handlePlayerSearchRequest();
-    }
-    
-    // Check for team requests
-    if (this.isTeamSearchRequest(lowerPrompt)) {
-      return this.handleTeamSearchRequest();
-    }
-    
-    // Fallback to generic chat
-    return this.handleGenericChat(prompt);
+
+    const now = Date.now();
+    const delayNeeded = Math.max(0, this.requestDelay - (now - this.lastRequestTime));
+
+    return of(null).pipe(
+      delay(delayNeeded),
+      switchMap(() => {
+        this.lastRequestTime = Date.now();
+        return this.processUserMessage(prompt);
+      }),
+      retryWhen(errors => errors.pipe(delay(1000), take(3))),
+      tap(response => this.cacheResponse(prompt, response)),
+      catchError(() => of("Yalla, I'm a bit busy right now. Try again in a moment!"))
+    );
   }
 
-  // Court Reservation Methods
-  private isCourtReservationRequest(prompt: string): boolean {
-    const triggers = [
-      'reserve court', 'book court', 'court reservation',
-      'find court', 'available courts', 'need court',
-      'looking for court', 'play football', 'play basketball'
-    ];
-    return triggers.some(phrase => prompt.includes(phrase));
-  }
-
-  private startCourtReservation(): Observable<string> {
-    this.reservationState = {
-      inProgress: true,
-      collectedData: {},
-      currentStep: 0
-    };
-    return of("Let's reserve a court! Please provide:\n1. Location (e.g. Beirut, Hamra)\n2. Date (DD/MM/YYYY)\n3. Time (HH:MM)\n4. Sport type\n\nYou can provide all at once or one by one.");
-  }
-
-  private handleReservationFlow(prompt: string): Observable<string> {
-    // Extract information from user input
-    this.extractReservationData(prompt);
-    
-    // Check if we have all required data
-    if (this.hasAllReservationData()) {
-      return this.processCourtReservation();
-    }
-    
-    // Ask for missing information
-    return this.requestMissingReservationData();
-  }
-
-  private extractReservationData(prompt: string): void {
-    // Extract location
-    const locations = ['hamra', 'beirut', 'achrafieh', 'verdun'];
-    const foundLocation = locations.find(loc => prompt.includes(loc));
-    if (foundLocation) {
-      this.reservationState.collectedData.location = foundLocation;
+  private processUserMessage(prompt: string): Observable<string> {
+    if (this.isTerminationMessage(prompt)) {
+      this.resetConversation();
+      return of("Shukran for using Malaabna! See you next time! 🏆");
     }
 
-    // Extract date
-    const dateMatch = prompt.match(/\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/);
-    if (dateMatch) {
-      this.reservationState.collectedData.date = dateMatch[0];
+    if (this.conversationState.context === 'courtLocation') {
+      return this.handleCourtLocationFlow(prompt);
     }
 
-    // Extract time
-    const timeMatch = prompt.match(/\d{1,2}:\d{2}/);
-    if (timeMatch) {
-      this.reservationState.collectedData.time = timeMatch[0];
-    }
-
-    // Extract sport
-    const sports = ['football', 'basketball', 'tennis', 'volleyball'];
-    const foundSport = sports.find(sport => prompt.includes(sport));
-    if (foundSport) {
-      this.reservationState.collectedData.sport = foundSport;
-    }
+    return this.determineUserIntent(prompt).pipe(
+      switchMap(intent => {
+        switch (intent.type) {
+          case 'courts':
+            this.conversationState.context = 'courtLocation';
+            return of("Yalla! Let's find you a court. Where are you located?");
+          case 'players':
+            return this.getAvailablePlayers().pipe(
+              switchMap(players => this.formatPlayerResponse(players, prompt))
+            );
+          case 'teams':
+            return this.getAvailableTeams().pipe(
+              switchMap(teams => this.formatTeamResponse(teams, prompt))
+            );
+          default:
+            return of("Malaabna is all about sports! Ask me about courts, players, or teams.");
+        }
+      })
+    );
   }
 
-  private hasAllReservationData(): boolean {
-    const data = this.reservationState.collectedData;
-    return !!data.location && !!data.date && !!data.time && !!data.sport;
-  }
+  private handleCourtLocationFlow(locationInput: string): Observable<string> {
+    this.conversationState.userLocation = { address: locationInput };
 
-  private requestMissingReservationData(): Observable<string> {
-    const data = this.reservationState.collectedData;
-    const missing = [];
-    if (!data.location) missing.push('location');
-    if (!data.date) missing.push('date');
-    if (!data.time) missing.push('time');
-    if (!data.sport) missing.push('sport type');
-    return of(`Please provide: ${missing.join(', ')}`);
-  }
-
-  private processCourtReservation(): Observable<string> {
-    return this.findAvailableCourts().pipe(
+    return this.getAvailableCourts().pipe(
       map(courts => {
-        if (courts.length === 0) {
-          this.reservationState.inProgress = false;
-          return "No available courts match your criteria. Please try different parameters.";
-        }
-
-        let response = "🏟 Available Courts:\n\n";
-        courts.forEach((court, index) => {
-          response += `${index + 1}. ${court.name}\n`;
-          response += `   - Address: ${court.location?.address || 'N/A'}\n`;
-          response += `   - Amenities: ${court.amenities?.join(', ') || 'N/A'}\n`;
-          response += `   - Phone: ${court.contact?.phone || 'N/A'}\n\n`;
-        });
-
-        response += "Reply with the number of the court you want to reserve.";
-        return response;
-      }),
-      catchError(error => {
-        console.error('Court search error:', error);
-        this.reservationState.inProgress = false;
-        return of("Error searching for courts. Please try again.");
-      })
-    );
-  }
-
-  private findAvailableCourts(): Observable<any[]> {
-    const courtsRef = collection(this.firestore, 'courts');
-    let q = query(courtsRef);
-
-    // Add filters based on collected data
-    if (this.reservationState.collectedData.location) {
-      q = query(q, where('location.area', '==', this.reservationState.collectedData.location));
-    }
-    if (this.reservationState.collectedData.sport) {
-      q = query(q, where('sportType', '==', this.reservationState.collectedData.sport));
-    }
-
-    return collectionData(q, { idField: 'id' }).pipe(
-      tap(courts => console.log('Found courts:', courts)),
-      catchError(error => {
-        console.error('Firestore error:', error);
-        return of([]);
-      })
-    );
-  }
-
-  private confirmReservation(courtNumber: number): Observable<string> {
-    return this.findAvailableCourts().pipe(
-      switchMap(courts => {
-        if (courtNumber < 1 || courtNumber > courts.length) {
-          return of("Invalid court number. Please try again.");
-        }
-
-        const selectedCourt = courts[courtNumber - 1];
-        this.reservationState.collectedData.courtId = selectedCourt.id;
-        this.reservationState.collectedData.courtName = selectedCourt.name;
-
-        const reservationsRef = collection(this.firestore, 'reservations');
-        return from(addDoc(reservationsRef, {
-          ...this.reservationState.collectedData,
-          userId: 'current-user-id', // Replace with actual user ID
-          status: 'pending',
-          createdAt: new Date().toISOString()
-        })).pipe(
-          map(() => {
-            this.reservationState.inProgress = false;
-            return `✅ Reservation confirmed for ${selectedCourt.name}! You'll receive a confirmation shortly.`;
-          }),
-          catchError(error => {
-            console.error('Reservation error:', error);
-            return of("⚠️ Failed to create reservation. Please try again.");
-          })
+        const nearbyCourts = courts.filter(court =>
+          court.location.address &&
+          court.location.address.toLowerCase().includes(locationInput.toLowerCase())
         );
+
+        if (nearbyCourts.length === 0) {
+          this.resetConversation();
+          const suggestions = courts.slice(0, 3).map(c => c.location.address).join(', ');
+          return `No courts found in ${locationInput}. Yalla, try these areas: ${suggestions}`;
+        }
+
+        this.resetConversation();
+        return this.formatCourtsResponse(nearbyCourts);
       })
     );
   }
 
-  // Player Search Methods
-  private isFootballPlayerRequest(prompt: string): boolean {
-    const footballTriggers = ['football', 'soccer', 'defender', 'striker', 'midfielder', 'goalkeeper'];
-    return this.playerSearchPhrases.some(phrase => prompt.includes(phrase)) || 
-           footballTriggers.some(trigger => prompt.includes(trigger));
-  }
+  private determineUserIntent(prompt: string): Observable<{ type: 'courts' | 'players' | 'teams' | 'unknown' }> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`,
+    });
 
-  private handlePlayerSearchRequest(): Observable<string> {
-    return this.getAvailablePlayers().pipe(
-      map(players => {
-        const footballPlayers = players.filter(p => p.sport?.toLowerCase() === 'football');
-        
-        if (footballPlayers.length === 0) {
-          return "No football players available currently.";
-        }
+    const systemMessage = `Determine if the user wants info about:
+    1. Sports courts (respond with {"type": "courts"})
+    2. Players looking for teams ({"type": "players"})
+    3. Teams looking for players ({"type": "teams"})
+    4. None of these ({"type": "unknown"})
+    Only respond with the JSON object.`;
 
-        let response = "⚽ Available Football Players:\n\n";
-        footballPlayers.slice(0, 5).forEach(player => {
-          response += `• ${player.userName || 'Player'}\n`;
-          response += `  - Position: ${player.position || 'Any'}\n`;
-          if (player.createdAt) {
-            response += `  - Active since: ${this.formatDate(player.createdAt)}\n`;
+    const body = {
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 50,
+      temperature: 0.1,
+      response_format: { type: "json_object" }
+    };
+
+    return this.http.post<any>(this.apiUrl, body, { headers }).pipe(
+      map(response => {
+        try {
+          const result = JSON.parse(response.choices[0].message.content);
+          const validTypes = ['courts', 'players', 'teams', 'unknown'] as const;
+          if (result && validTypes.includes(result.type)) {
+            return { type: result.type as typeof validTypes[number] };
           }
-          response += `\n`;
-        });
-        return response;
-      }),
-      catchError(error => {
-        console.error('Database error:', error);
-        return of("⚠️ Couldn't access player data. Please try again later.");
-      })
-    );
-  }
-
-  // Team Search Methods
-  private isTeamSearchRequest(prompt: string): boolean {
-    return this.teamSearchPhrases.some(phrase => prompt.includes(phrase));
-  }
-
-  private handleTeamSearchRequest(): Observable<string> {
-    return this.getAvailableTeams().pipe(
-      map(teams => {
-        if (teams.length === 0) {
-          return "No teams are currently recruiting players.";
+          return { type: 'unknown' as const };
+        } catch {
+          return { type: 'unknown' as const };
         }
-
-        let response = "🏟️ Teams Looking for Players:\n\n";
-        teams.slice(0, 5).forEach(team => {
-          response += `• ${team.name || 'Team'}\n`;
-          if (team.sportType) response += `  - Sport: ${team.sportType}\n`;
-          if (team.neededPositions) response += `  - Positions needed: ${team.neededPositions.join(', ')}\n`;
-          response += `\n`;
-        });
-        return response;
       }),
-      catchError(error => {
-        console.error('Database error:', error);
-        return of("⚠️ Couldn't access team data. Please try again later.");
-      })
+      catchError(() => of({ type: 'unknown' as const }))
     );
   }
 
-  // Database Access Methods
-  getAvailablePlayers(): Observable<any[]> {
-    const playersRef = collection(this.firestore, 'playerRequests');
-    return collectionData(playersRef, { idField: 'id' }).pipe(
-      catchError(error => {
-        console.error('Firestore Error:', error);
-        return of([]);
-      })
+  private formatPlayerResponse(players: PlayerRequest[], prompt: string): Observable<string> {
+    if (!players.length) {
+      return of("Yalla, no players looking right now. Check back later or create your own request!");
+    }
+
+    const playerData = players.slice(0, 5).map(p => ({
+      name: p.userName,
+      position: p.position || 'Any position',
+      sport: p.sport,
+      level: p.skillLevel || 'All levels'
+    }));
+
+    return this.generateAIResponse(
+      `Create a friendly message listing players looking for teams.`,
+      playerData,
+      prompt,
+      () => {
+        let response = '⚽ Players ready to play:\n\n';
+        playerData.forEach(player => {
+          response += `• ${player.name} - ${player.position} (${player.sport}, ${player.level})\n`;
+        });
+        return response + '\nYalla, find your perfect teammate!';
+      }
     );
   }
 
-  getAvailableTeams(): Observable<any[]> {
-    const teamsRef = collection(this.firestore, 'teams');
-    const q = query(teamsRef, where('isRecruiting', '==', true));
-    return collectionData(q, { idField: 'id' }).pipe(
-      catchError(error => {
-        console.error('Firestore Error:', error);
-        return of([]);
-      })
+  private formatTeamResponse(teams: Team[], prompt: string): Observable<string> {
+    if (!teams.length) {
+      return of("No teams recruiting right now. Malaabna can help you create one!");
+    }
+
+    const teamData = teams.slice(0, 5).map(t => ({
+      name: t.name || 'Unnamed Team',
+      sport: t.sport || 'Not specified',
+      needs: t.positionsNeeded?.join(', ') || 'Any position',
+      location: t.location?.address || 'Anywhere'
+    }));
+
+    return this.generateAIResponse(
+      `Create an engaging message about teams looking for players.`,
+      teamData,
+      prompt,
+      () => {
+        let response = '🏟️ Teams looking for players:\n\n';
+        teamData.forEach(team => {
+          response += `• ${team.name} - ${team.sport} (Needs: ${team.needs}, Location: ${team.location})\n`;
+        });
+        return response + '\nJoin the Malaabna community today!';
+      }
     );
   }
 
-  // Generic Chat Method
-  private handleGenericChat(prompt: string): Observable<string> {
+  private formatCourtsResponse(courts: Court[]): string {
+    let response = '🏀 Courts ready for you:\n\n';
+    courts.slice(0, 5).forEach((court, index) => {
+      response += `${index + 1}. ${court.name}\n`;
+      response += `   - Address: ${court.location.address}\n`;
+      response += `   - Sports: ${court.sports?.join(', ') || 'Not specified'}\n`;
+      response += `   - Amenities: ${court.amenities?.join(', ') || 'Not specified'}\n`;
+      response += `   - Phone: ${court.location.phone || 'Contact available upon booking'}\n\n`;
+    });
+    return response + '\nYalla, book your game at Malaabna!';
+  }
+
+  private generateAIResponse(
+    systemPrompt: string,
+    data: any,
+    originalPrompt: string,
+    fallback: () => string
+  ): Observable<string> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.apiKey}`,
@@ -343,39 +259,81 @@ export class ChatbotService {
     const body = {
       model: 'gpt-3.5-turbo',
       messages: [
-        { 
-          role: 'system', 
-          content: "You are a sports chatbot. Respond concisely about courts, players, and teams."
-        },
-        { role: 'user', content: prompt }
+        { role: 'system', content: `${systemPrompt} Data: ${JSON.stringify(data)}` },
+        { role: 'user', content: originalPrompt }
       ],
-      max_tokens: 150,
-      temperature: 0.7,
+      max_tokens: 250,
+      temperature: 0.7
     };
 
     return this.http.post<any>(this.apiUrl, body, { headers }).pipe(
-      map(response => response.choices[0].message.content.trim()),
-      catchError(error => {
-        console.error('API Error:', error);
-        return of("Sorry, I encountered an error. Please try again.");
-      })
+      map(response => response.choices[0]?.message?.content?.trim() || fallback()),
+      catchError(() => of(fallback()))
     );
   }
 
-  private formatDate(timestamp: any): string {
-    if (!timestamp) return 'Unknown date';
-    try {
-      if (timestamp.toDate) {
-        return timestamp.toDate().toLocaleDateString('en-US', {
-          year: 'numeric', 
-          month: 'short', 
-          day: 'numeric'
-        });
-      }
-      return new Date(timestamp).toLocaleDateString();
-    } catch (e) {
-      console.warn('Date formatting error:', e);
-      return 'Unknown date';
+  private handleWithAI(prompt: string): Observable<string> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`,
+    });
+
+    const body = {
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: `You are Malaabna assistant. Be friendly, sports only.` },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 200,
+      temperature: 0.7
+    };
+
+    return this.http.post<any>(this.apiUrl, body, { headers }).pipe(
+      map(response => response.choices[0]?.message?.content?.trim() || "Yalla, I'm having trouble responding."),
+      catchError(() => of("Yalla, I'm having trouble responding."))
+    );
+  }
+
+  private getAvailablePlayers(): Observable<PlayerRequest[]> {
+    return collectionData(collection(this.firestore, 'playerRequests'), { idField: 'id' }).pipe(
+      map(data => data as PlayerRequest[]),
+      catchError(() => of([]))
+    );
+  }
+
+  private getAvailableTeams(): Observable<Team[]> {
+    return collectionData(
+      query(collection(this.firestore, 'teams'), where('status', '==', 'forming')),
+      { idField: 'id' }
+    ).pipe(
+      map(data => data as Team[]),
+      catchError(() => of([]))
+    );
+  }
+
+  private getAvailableCourts(): Observable<Court[]> {
+    return collectionData(collection(this.firestore, 'courts'), { idField: 'id' }).pipe(
+      map(data => data as Court[]),
+      catchError(() => of([]))
+    );
+  }
+
+  private isTerminationMessage(message: string): boolean {
+    return ['bye', 'goodbye', 'exit', 'quit', 'stop', 'leave', 'maasalama', 'khalas']
+      .some(phrase => message.toLowerCase().includes(phrase));
+  }
+
+  private resetConversation(): void {
+    this.conversationState = {};
+  }
+
+  private getCachedResponse(prompt: string): string | null {
+    return this.cache.get(prompt) || null;
+  }
+
+  private cacheResponse(prompt: string, response: string): void {
+    if (response && response.length > 5) {
+      this.cache.set(prompt, response);
     }
   }
 }
