@@ -185,27 +185,35 @@ export class ChatbotService {
     if (!players.length) {
       return of("Yalla, no players looking right now. Check back later or create your own request!");
     }
-
+  
     const playerData = players.slice(0, 5).map(p => ({
       name: p.userName,
       position: p.position || 'Any position',
       sport: p.sport,
-      level: p.skillLevel || 'All levels'
+      level: p.skillLevel || 'All levels',
+      phone: this.generateRandomPhone()
     }));
-
+  
     return this.generateAIResponse(
-      `Create a friendly message listing players looking for teams.`,
+      `Create a friendly message listing players looking for teams including their phone numbers.`,
       playerData,
       prompt,
       () => {
         let response = '⚽ Players ready to play:\n\n';
         playerData.forEach(player => {
-          response += `• ${player.name} - ${player.position} (${player.sport}, ${player.level})\n`;
+          response += `• ${player.name} - ${player.position} (${player.sport}, ${player.level})\n   📞 ${player.phone}\n`;
         });
         return response + '\nYalla, find your perfect teammate!';
       }
     );
   }
+
+  private generateRandomPhone(): string {
+    const number = Math.floor(100000 + Math.random() * 899999);  // random 6-digit number
+    return `+961${number}`;
+  }
+  
+  
 
   private formatTeamResponse(teams: Team[], prompt: string): Observable<string> {
     if (!teams.length) {
